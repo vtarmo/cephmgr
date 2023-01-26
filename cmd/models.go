@@ -1,11 +1,5 @@
 package cmd
 
-type Access struct {
-	Ceph         string
-	AccessKey    string
-	AccessSecret string
-}
-
 type User struct {
 	ID          string        `json:"user_id" url:"uid"`
 	DisplayName string        `json:"display_name" url:"display-name"`
@@ -24,4 +18,10 @@ type UserKeySpec struct {
 type UserCapSpec struct {
 	Type string `json:"type"`
 	Perm string `json:"perm"`
+}
+
+type Bucket struct {
+	ID     string `json:"id"`
+	Bucket string `json:"bucket" url:"bucket"`
+	Owner  string `json:"owner"`
 }

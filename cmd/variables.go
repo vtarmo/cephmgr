@@ -4,8 +4,9 @@ var (
 	cephHost         string
 	cephAccessKey    string
 	cephAccessSecret string
-	userName         string
-	userFullname     string
-	userEmail        string
-	userCaps         string
+	// cfgFile          string
+	userCaps     string
+	userEmail    string
+	userFullname string
+	userName     string
 )

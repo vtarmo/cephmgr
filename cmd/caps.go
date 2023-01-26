@@ -40,7 +40,7 @@ var (
 			cmd.Help()
 		},
 	}
-	addCmd = &cobra.Command{
+	addCapsCmd = &cobra.Command{
 		Use:   "add",
 		Short: "Add user capabilities",
 		Long: `Add user capabilities in form 
@@ -51,12 +51,6 @@ Add multiple capabilities to user:
 
 --caps "buckets=*,users=read"`,
 		Run: func(cmd *cobra.Command, args []string) {
-			access := &Access{
-				Ceph:         cephHost,
-				AccessKey:    cephAccessKey,
-				AccessSecret: cephAccessSecret,
-			}
-
 			user := &User{
 				ID:          userName,
 				DisplayName: userFullname,
@@ -68,10 +62,14 @@ Add multiple capabilities to user:
 				os.Exit(1)
 			}
 
-			addUserCaps(*access, *user)
+			err := addUserCaps(*user)
+			if err != nil {
+				fmt.Println(err)
+				cmd.Help()
+			}
 		},
 	}
-	removeCmd = &cobra.Command{
+	removeCapsCmd = &cobra.Command{
 		Use:   "remove",
 		Short: "Remove user capabilities",
 		Long: `Remove user capabilities in form 
@@ -82,11 +80,6 @@ Remove multiple capabilities to user:
 
 --caps "buckets=*,users=read"`,
 		Run: func(cmd *cobra.Command, args []string) {
-			access := &Access{
-				Ceph:         cephHost,
-				AccessKey:    cephAccessKey,
-				AccessSecret: cephAccessSecret,
-			}
 
 			user := &User{
 				ID:          userName,
@@ -100,50 +93,55 @@ Remove multiple capabilities to user:
 				os.Exit(1)
 			}
 
-			removeUserCaps(*access, *user)
+			err := removeUserCaps(*user)
+			if err != nil {
+				fmt.Println(err)
+				cmd.Help()
+			}
 		},
 	}
 )
 
 func init() {
 	userCmd.AddCommand(capsCmd)
-	capsCmd.AddCommand(addCmd)
-	capsCmd.AddCommand(removeCmd)
+	capsCmd.AddCommand(addCapsCmd)
+	capsCmd.AddCommand(removeCapsCmd)
 	userCmd.MarkFlagRequired("user")
-	addCmd.MarkFlagRequired("user")
-	removeCmd.MarkFlagRequired("user")
+	addCapsCmd.MarkFlagRequired("user")
+	removeCapsCmd.MarkFlagRequired("user")
 	userCmd.MarkFlagRequired("caps")
 }
 
-func addUserCaps(ceph Access, user User) {
-	c, err := admin.New(ceph.Ceph, ceph.AccessKey, ceph.AccessSecret, nil)
+func addUserCaps(user User) error {
+	c, err := admin.New(cephHost, cephAccessKey, cephAccessSecret, nil)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	userCaps, err := c.AddUserCap(context.Background(), user.ID, user.UserCaps)
 
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	fmt.Printf("User ID: %s\n", user.ID)
 	fmt.Println(userCaps)
+	return nil
 }
 
-func removeUserCaps(ceph Access, user User) {
-	c, err := admin.New(ceph.Ceph, ceph.AccessKey, ceph.AccessSecret, nil)
+func removeUserCaps(user User) error {
+	c, err := admin.New(cephHost, cephAccessKey, cephAccessSecret, nil)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	userCaps, err := c.RemoveUserCap(context.Background(), user.ID, user.UserCaps)
 
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	fmt.Printf("User ID: %s\n", user.ID)
 	fmt.Println(userCaps)
-
+	return nil
 }

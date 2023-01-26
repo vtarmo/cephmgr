@@ -45,11 +45,6 @@ var (
 		Short: "Get user info",
 		Long:  `Get user info`,
 		Run: func(cmd *cobra.Command, args []string) {
-			access := &Access{
-				Ceph:         cephHost,
-				AccessKey:    cephAccessKey,
-				AccessSecret: cephAccessSecret,
-			}
 
 			user := &User{
 				ID:          userName,
@@ -61,7 +56,11 @@ var (
 				cmd.Help()
 				os.Exit(1)
 			}
-			getUser(*access, *user)
+			err := getUser(*user)
+			if err != nil {
+				fmt.Println(err)
+				cmd.Help()
+			}
 		},
 	}
 	listCmd = &cobra.Command{
@@ -69,12 +68,11 @@ var (
 		Short: "Get a list of users",
 		Long:  `get list of users from the cluster.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			access := &Access{
-				Ceph:         cephHost,
-				AccessKey:    cephAccessKey,
-				AccessSecret: cephAccessSecret,
+			err := listUsers()
+			if err != nil {
+				fmt.Println(err)
+				cmd.Help()
 			}
-			listUsers(*access)
 		},
 	}
 	deleteCmd = &cobra.Command{
@@ -82,11 +80,6 @@ var (
 		Short: "Delete user",
 		Long:  `Delete user`,
 		Run: func(cmd *cobra.Command, args []string) {
-			access := &Access{
-				Ceph:         cephHost,
-				AccessKey:    cephAccessKey,
-				AccessSecret: cephAccessSecret,
-			}
 
 			user := &User{
 				ID:          userName,
@@ -99,7 +92,11 @@ var (
 				os.Exit(1)
 			}
 
-			deleteUser(*access, *user)
+			err := deleteUser(*user)
+			if err != nil {
+				fmt.Println(err)
+				cmd.Help()
+			}
 		},
 	}
 )
@@ -117,16 +114,16 @@ func init() {
 	deleteCmd.MarkFlagRequired("user")
 }
 
-func getUser(ceph Access, user User) {
-	c, err := admin.New(ceph.Ceph, ceph.AccessKey, ceph.AccessSecret, nil)
+func getUser(user User) error {
+	c, err := admin.New(cephHost, cephAccessKey, cephAccessSecret, nil)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	u, err := c.GetUser(context.Background(), admin.User{ID: user.ID})
 
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 10, 1, 5, ' ', 0)
@@ -135,35 +132,38 @@ func getUser(ceph Access, user User) {
 	fmt.Fprintln(w, "UID\tFull Name\tEmail\tCaps")
 	fmt.Fprintf(w, fs, u.ID, u.DisplayName, u.Email, u.Caps)
 	w.Flush()
+	return nil
 }
 
-func listUsers(ceph Access) {
+func listUsers() error {
 
-	c, err := admin.New(ceph.Ceph, ceph.AccessKey, ceph.AccessSecret, nil)
+	c, err := admin.New(cephHost, cephAccessKey, cephAccessSecret, nil)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	users, err := c.GetUsers(context.Background())
 
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	for _, j := range *users {
 		fmt.Println(j)
 	}
+	return nil
 }
 
-func deleteUser(ceph Access, user User) {
+func deleteUser(user User) error {
 
-	c, err := admin.New(ceph.Ceph, ceph.AccessKey, ceph.AccessSecret, nil)
+	c, err := admin.New(cephHost, cephAccessKey, cephAccessSecret, nil)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	err = c.RemoveUser(context.Background(), admin.User{ID: user.ID})
 
 	if err != nil {
-		panic(err)
+		return err
 	}
+	return nil
 }
