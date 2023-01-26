@@ -1,3 +1,2 @@
-- Initial release
-- rgw only
-- users add, delete, list and update capabilities
+- cephmgr config file fix
+- add capabilities when creating users

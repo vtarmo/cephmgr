@@ -21,7 +21,11 @@ THE SOFTWARE.
 */
 package main
 
-import "github.com/vtarmo/cephmgr/cmd"
+import (
+	_ "embed"
+
+	"github.com/vtarmo/cephmgr/cmd"
+)
 
 var (
 	// these will be replaced by goreleaser

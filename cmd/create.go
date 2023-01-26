@@ -40,11 +40,6 @@ You can also provide capabilities for user with --caps flag:
 
 --caps "buckets=*"`,
 		Run: func(cmd *cobra.Command, args []string) {
-			access := &Access{
-				Ceph:         cephHost,
-				AccessKey:    cephAccessKey,
-				AccessSecret: cephAccessSecret,
-			}
 
 			user := &User{
 				ID:          userName,
@@ -53,7 +48,11 @@ You can also provide capabilities for user with --caps flag:
 				UserCaps:    userCaps,
 			}
 
-			createUser(*access, *user)
+			err := createUser(*user)
+			if err != nil {
+				fmt.Println(err)
+				cmd.Help()
+			}
 
 		},
 	}
@@ -69,16 +68,16 @@ func init() {
 
 }
 
-func createUser(ceph Access, user User) {
+func createUser(user User) error {
 
-	c, err := admin.New(ceph.Ceph, ceph.AccessKey, ceph.AccessSecret, nil)
+	c, err := admin.New(cephHost, cephAccessKey, cephAccessSecret, nil)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	users, err := c.CreateUser(context.Background(), admin.User{ID: user.ID, DisplayName: user.DisplayName, UserCaps: user.UserCaps})
 
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	buser, _ := json.Marshal(users)
@@ -93,4 +92,5 @@ func createUser(ceph Access, user User) {
 		fmt.Println("accesskey:", ad.AccessKey)
 		fmt.Println("secret:", ad.SecretKey)
 	}
+	return nil
 }
